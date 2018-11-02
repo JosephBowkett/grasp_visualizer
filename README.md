@@ -18,7 +18,7 @@ make
 ## Lazy Install (if desired)
 
 ```bash
-echo "export PATH=\$PATH:\$PWD" >> ~/.bashrc
+echo "export PATH=\$PATH:$PWD" >> ~/.bashrc
 ```
 
 ## Usage
