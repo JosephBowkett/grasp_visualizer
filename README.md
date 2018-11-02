@@ -1,6 +1,21 @@
 # grasp_visualizer
 Simple tool to visualize a grasp pose within a pointcloud
 
+## Build
+
+```bash
+git clone https://github.com/JosephBowkett/grasp_visualizer.git
+cd grasp_visualizer
+mkdir build && cd build
+cmake ..
+make
+```
+## Lazy Install (if desired)
+
+```bash
+echo "export PATH=\$PATH:\$PWD" >> ~/.bashrc
+```
+
 ## Usage
 
 To display just a pose in the pointcloud:
