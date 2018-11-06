@@ -3,10 +3,8 @@ Simple tool to visualize a grasp pose within a pointcloud
 
 ## Build
 
-Requires PCL >1.7 which can be installed on Ubuntu 16.04 with:
-```bash
-sudo apt install libpcl-1.7-dev
-```
+Requires PCL >1.8 from [here](https://github.com/PointCloudLibrary/pcl/tree/pcl-1.8.0)
+
 To Build:
 ```bash
 git clone https://github.com/JosephBowkett/grasp_visualizer.git
