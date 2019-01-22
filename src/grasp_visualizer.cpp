@@ -134,22 +134,8 @@ main (int argc, char** argv)
 
   Eigen::Affine3d world_to_grasp = Eigen::Translation3d(x, y, z) * Eigen::Quaterniond(qw, qx, qy, qz);
 
-  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
-
-  if (gripper_arg > 0)
-  {
-    pcl::PolygonMesh::Ptr gripper_ptr (new pcl::PolygonMesh);
-    if (pcl::io::loadPLYFile(std::string(argv[gripper_arg+1]), *gripper_ptr) == -1)
-    {
-      PCL_ERROR (("Couldn't read file " + std::string(argv[gripper_arg+1]) + " \n").c_str());
-      return (-1);
-    }
-    viewer = visualize_gripper(cloud_ptr, world_to_grasp, gripper_ptr);
-  }
-  else
-  {
-    viewer = visualize_pose(cloud_ptr, world_to_grasp);
-  }
+  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+  viewer->setBackgroundColor (0, 0, 0);
 
   if (roi_arg > 0)
   {
@@ -163,7 +149,40 @@ main (int argc, char** argv)
     float roi_x, roi_y, roi_z, roi_qw, roi_qx, roi_qy, roi_qz, xdim, ydim, zdim;
     roi_file >> roi_x >> roi_y >> roi_z >> roi_qw >> roi_qx >> roi_qy >> roi_qz >> xdim >> ydim >> zdim;
 
-    viewer->addCube(world_to_grasp.inverse().cast <float> () * Eigen::Vector3f(roi_x,roi_y,roi_z-zdim/2), Eigen::Quaterniond(qw, qx, qy, qz).inverse().cast <float> () * Eigen::Quaternionf(roi_qw,roi_qx,roi_qy,roi_qz), xdim, ydim, zdim);
+    viewer->addCube(world_to_grasp.inverse().cast <float> () * Eigen::Vector3f(roi_x,roi_y,roi_z), Eigen::Quaterniond(qw, qx, qy, qz).inverse().cast <float> () * Eigen::Quaternionf(roi_qw,roi_qx,roi_qy,roi_qz), xdim, ydim, zdim);
+  }
+
+  viewer->setRepresentationToWireframeForAllActors ();
+
+  if (gripper_arg > 0)
+  {
+    pcl::PolygonMesh::Ptr gripper_ptr (new pcl::PolygonMesh);
+    if (pcl::io::loadPLYFile(std::string(argv[gripper_arg+1]), *gripper_ptr) == -1)
+    {
+      PCL_ERROR (("Couldn't read file " + std::string(argv[gripper_arg+1]) + " \n").c_str());
+      return (-1);
+    }
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_transformed (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::transformPointCloud(*cloud_ptr, *cloud_transformed, world_to_grasp.inverse());
+
+    pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(cloud_transformed);
+    viewer->addPointCloud<pcl::PointXYZRGB> (cloud_transformed, rgb, "sample cloud");
+    viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud");
+    viewer->initCameraParameters ();
+
+    viewer->addPolygonMesh(*gripper_ptr);
+  }
+  else
+  {
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_transformed (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::transformPointCloud(*cloud_ptr, *cloud_transformed, world_to_grasp.inverse());
+
+    pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(cloud_transformed);
+    viewer->addPointCloud<pcl::PointXYZRGB> (cloud_transformed, rgb, "sample cloud");
+    viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud");
+    viewer->addCoordinateSystem (0.2);
+    viewer->initCameraParameters ();
   }
 
   viewer->setCameraPosition(-0.5,0,0,0,0,0,0,1,0);
