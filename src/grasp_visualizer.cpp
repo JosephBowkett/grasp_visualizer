@@ -11,6 +11,7 @@
 
 
 #include <iostream>
+#include <string>
 
 #include <boost/thread/thread.hpp>
 #include <pcl/common/common_headers.h>
@@ -22,7 +23,7 @@
 #include <pcl/common/transforms.h>
 
 // --------------
-// -----Help-----
+// -----Help-----  #TODO: switch to boost::program_options
 // --------------
 void
 printUsage (const char* progName)
@@ -30,11 +31,13 @@ printUsage (const char* progName)
   std::cout << "\nUsage: "<<progName<<" pcloud.pcd pose.txt [options]\n\n"
             << "Options:\n"
             << "-------------------------------------------\n"
-            << "-h                    This help\n"
+            << "-h                    This help\n\n"
             << "-g gripper.ply        Display gripper in place of frame\n\n"
             << "-r roi.txt            Display transparent Region Of Interest box\n\n"
+            << "-e excl.roi           Display exclusion boxes from file\n\n"
             << "pose.txt in format \"x y z qw qx qy qz\"\n"
             << "roi.txt  in format \"x y z qw qx qy qz Xdim Ydim Zdim\"\n"
+            << "excl.roi in format \"x y z qw qx qy qz Xdim Ydim Zdim\"\n"
             << "\n";
 }
 
@@ -82,10 +85,11 @@ main (int argc, char** argv)
     return 0;
   }
 
-  bool display_gripper(false), display_roi(false);
+  bool display_gripper(false), display_roi(false), display_excl(false);
 
   int gripper_arg = pcl::console::find_argument (argc, argv, "-g");
   int roi_arg = pcl::console::find_argument (argc, argv, "-r");
+  int excl_arg = pcl::console::find_argument (argc, argv, "-e");
 
   if ( (argc >= 3) && (argv[1][0] != '-') && (argv[2][0] != '-') )
   {
@@ -106,6 +110,19 @@ main (int argc, char** argv)
     if ( (argc > (roi_arg + 1)) && (argv[roi_arg+1][0] != '-') )
     {
       std::cout << "\nDisplaying region of interest from " << argv[roi_arg+1] << "\n\n";
+    }
+    else
+    {
+      printUsage (argv[0]);
+      return 0;
+    }
+  }
+
+  if (excl_arg >= 0)
+  {
+    if ( (argc > (excl_arg + 1)) && (argv[excl_arg+1][0] != '-') )
+    {
+      std::cout << "\nDisplaying region of interest from " << argv[excl_arg+1] << "\n\n";
     }
     else
     {
@@ -153,6 +170,32 @@ main (int argc, char** argv)
   }
 
   viewer->setRepresentationToWireframeForAllActors ();
+
+  if (excl_arg > 0)
+  {
+    std::ifstream excl_file(argv[excl_arg+1]);
+    if (!excl_file.is_open())
+    {
+      PCL_ERROR (("Couldn't read file " + std::string(argv[excl_arg+1]) + " \n").c_str());
+      return (-1);
+    }
+
+    std::string line_in;
+    int number = 0;
+    while (std::getline(excl_file, line_in))
+    {
+      std::stringstream iss(line_in);
+
+      float excl_x, excl_y, excl_z, excl_qw, excl_qx, excl_qy, excl_qz, xdim, ydim, zdim;
+      iss >> excl_x >> excl_y >> excl_z >> excl_qw >> excl_qx >> excl_qy >> excl_qz >> xdim >> ydim >> zdim;
+
+      std::ostringstream stm;
+      stm << "excl_box_";
+      stm << number++;
+      viewer->addCube(Eigen::Vector3f(excl_x,excl_y,excl_z), Eigen::Quaternionf(excl_qw,excl_qx,excl_qy,excl_qz), xdim, ydim, zdim, stm.str());
+    }
+
+  }
 
   if (gripper_arg > 0)
   {
