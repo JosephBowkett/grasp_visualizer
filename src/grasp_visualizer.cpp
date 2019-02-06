@@ -122,7 +122,7 @@ main (int argc, char** argv)
   {
     if ( (argc > (excl_arg + 1)) && (argv[excl_arg+1][0] != '-') )
     {
-      std::cout << "\nDisplaying region of interest from " << argv[excl_arg+1] << "\n\n";
+      std::cout << "\nDisplaying exclusion boxes from " << argv[excl_arg+1] << "\n\n";
     }
     else
     {
