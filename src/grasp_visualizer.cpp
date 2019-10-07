@@ -161,6 +161,8 @@ main (int argc, char** argv)
       viewer->spinOnce (100);
       boost::this_thread::sleep (boost::posix_time::microseconds (100000));
     }
+
+    return 0;
   }
 
   std::ifstream pose_file(argv[2]);
