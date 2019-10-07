@@ -28,7 +28,7 @@
 void
 printUsage (const char* progName)
 {
-  std::cout << "\nUsage: "<<progName<<" pcloud.pcd pose.txt [options]\n\n"
+  std::cout << "\nUsage: "<<progName<<" pcloud.pcd [pose.txt] [options]\n\n"
             << "Options:\n"
             << "-------------------------------------------\n"
             << "-h                    This help\n\n"
@@ -79,7 +79,7 @@ boost::shared_ptr<pcl::visualization::PCLVisualizer> visualize_gripper (pcl::Poi
 int
 main (int argc, char** argv)
 {
-  if ( (pcl::console::find_argument (argc, argv, "-h") >= 0) || (argc < 3) )
+  if ( (pcl::console::find_argument (argc, argv, "-h") >= 0) || (argc < 2) )
   {
     printUsage (argv[0]);
     return 0;
@@ -98,6 +98,10 @@ main (int argc, char** argv)
   else if ( (gripper_arg >= 0) && (argc > (gripper_arg + 1)) && (argv[gripper_arg+1][0] != '-') )
   {
     std::cout << "\nDisplaying gripper " << argv[gripper_arg+1] << " at pose from " << argv[2] << " in PCD " << argv[1] << "\n\n";
+  }
+  else if (argc == 2)
+  {
+    std::cout << "\nDisplaying pointcloud " << argv[1] << "\n\n";
   }
   else
   {
@@ -139,6 +143,26 @@ main (int argc, char** argv)
     return (-1);
   }
 
+  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+  viewer->setBackgroundColor (0, 0, 0);
+
+  // If only provided a pcd then just display it
+  if (argc == 2)
+  {
+    pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(cloud_ptr);
+    viewer->addPointCloud<pcl::PointXYZRGB> (cloud_ptr, rgb, "cloud");
+    viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "cloud");
+    viewer->addCoordinateSystem (0.2);
+    viewer->initCameraParameters ();
+    viewer->setCameraPosition(-0.5,0,0,0,0,0,0,1,0);
+  
+    while (!viewer->wasStopped ())
+    {
+      viewer->spinOnce (100);
+      boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+    }
+  }
+
   std::ifstream pose_file(argv[2]);
   if (!pose_file.is_open())
   {
@@ -150,9 +174,6 @@ main (int argc, char** argv)
   pose_file >> x >> y >> z >> qw >> qx >> qy >> qz;
 
   Eigen::Affine3d world_to_grasp = Eigen::Translation3d(x, y, z) * Eigen::Quaterniond(qw, qx, qy, qz);
-
-  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
-  viewer->setBackgroundColor (0, 0, 0);
 
   if (roi_arg > 0)
   {
@@ -210,8 +231,8 @@ main (int argc, char** argv)
     pcl::transformPointCloud(*cloud_ptr, *cloud_transformed, world_to_grasp.inverse());
 
     pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(cloud_transformed);
-    viewer->addPointCloud<pcl::PointXYZRGB> (cloud_transformed, rgb, "sample cloud");
-    viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud");
+    viewer->addPointCloud<pcl::PointXYZRGB> (cloud_transformed, rgb, "cloud");
+    viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "cloud");
     viewer->initCameraParameters ();
 
     viewer->addPolygonMesh(*gripper_ptr);
@@ -222,8 +243,8 @@ main (int argc, char** argv)
     pcl::transformPointCloud(*cloud_ptr, *cloud_transformed, world_to_grasp.inverse());
 
     pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(cloud_transformed);
-    viewer->addPointCloud<pcl::PointXYZRGB> (cloud_transformed, rgb, "sample cloud");
-    viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud");
+    viewer->addPointCloud<pcl::PointXYZRGB> (cloud_transformed, rgb, "cloud");
+    viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "cloud");
     viewer->addCoordinateSystem (0.2);
     viewer->initCameraParameters ();
   }
